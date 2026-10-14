@@ -1,0 +1,50 @@
+name: Build Kwar Nu Booster Dylib
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Verify Source File
+        run: |
+          echo "Checking repository contents:"
+          ls -la
+          if [ ! -f "KwarNuBooster.m" ]; then
+            echo "Error: KwarNuBooster.m was not found in the root directory!"
+            exit 1
+          fi
+
+      - name: Compile Universal Dylib
+        run: |
+          xcrun -sdk iphoneos clang -dynamiclib \
+            -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+            -arch arm64 \
+            -arch arm64e \
+            -framework Foundation \
+            -framework UIKit \
+            -framework QuartzCore \
+            -fobjc-arc \
+            -O3 \
+            -o KwarNuBooster.dylib \
+            KwarNuBooster.m
+
+      - name: Inspect Built Binary
+        run: |
+          file KwarNuBooster.dylib
+          ls -lh KwarNuBooster.dylib
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KwarNuBooster-dylib
+          path: KwarNuBooster.dylib
